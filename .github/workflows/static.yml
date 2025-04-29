@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="mn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODcargo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --highlight: #facc15;
+            --radius: 16px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 24px;
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 18px;
+            opacity: 0.85;
+        }
+
+        .search-box {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            background: #e2e8f0;
+            color: #111;
+            outline: none;
+        }
+
+        textarea {
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            background: #e2e8f0;
+            color: #111;
+            outline: none;
+            resize: vertical;
+            min-height: 100px;
+            max-height: 300px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .card-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: var(--surface);
+            flex: 1 1 30%;
+            padding: 24px;
+            text-align: center;
+            border-radius: var(--radius);
+            box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.05),
+                inset -2px -2px 8px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+        }
+
+        .card i {
+            font-size: 26px;
+            margin-bottom: 12px;
+            color: var(--highlight);
+        }
+
+        @media screen and (max-width: 768px) {
+            .card {
+                flex: 1 1 100%;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            padding-top: 60px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: auto;
+            padding: 20px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            color: var(--text);
+        }
+
+        .close {
+            color: var(--highlight);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .entry-list {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>ODcargo-д тавтай морилно уу</h1>
+        <p>Бараа шалгах</p>
+
+        <div class="search-box">
+            <input type="text" placeholder="Трак код эсвэл утасны сүүл 4 орон " id="trackingInput">
+            <button onclick="checkParcel()">Шалгах</button>
+        </div>
+
+        <div id="result" style="margin-top: 20px;"></div>
+
+        <div class="card-buttons">
+            <div class="card" onclick="openModal('contact')"><i class="fas fa-phone"></i> Холбоо барих</div>
+            <div class="card" onclick="openModal('guide')"><i class="fas fa-play-circle"></i> Заавар сургалт</div>
+            <div class="card" onclick="openModal('terms')"><i class="fas fa-file-contract"></i> Үйлчилгээний нөхцөл</div>
+            <div class="card" onclick="openModal('address')"><i class="fas fa-map-marker-alt"></i> Хаяг холбох</div>
+            <div class="card" onclick="openAdminPopup()"><i class="fas fa-lock"></i> Админ</div>
+        </div>
+    </div>
+
+    <!-- Popup гарч ирэх модал -->
+    <div id="popup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('popup-modal').style.display='none'">&times;</span>
+            <h3>Ачаа мэдээлэл</h3>
+            <p><strong>Нэр:</strong> <span id="popupName"></span></p>
+            <p><strong>Утас:</strong> <span id="popupPhone"></span></p>
+        </div>
+    </div>
+
+    <!-- Admin модал -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('admin-modal').style.display='none'">&times;</span>
+            <h2>Админ паннел</h2>
+            <input type="password" id="adminPassword" placeholder="Нууц үг оруулна уу">
+            <button onclick="validateAdmin()">Орох</button>
+
+            <div id="admin-area" style="display:none;">
+                <h3>Бараа мэдээлэл багцлан нэмэх</h3>
+                <input type="text" id="adminSearchInput" placeholder="Хайх Трак код эсвэл утасны дугаар" onkeyup="filterEntries()">
+                <textarea id="bulkInput" placeholder="Багцлагдсан мэдээллээ энд оруулна уу (жишээлбэл: 4月21新车 0104 464323284506596)"></textarea>
+                <button onclick="addBulkEntries()">Нэмэх</button>
+                <button onclick="openDeleteConfirmation()">Бүх трак кодуудыг устгах</button>
+                <div class="entry-list" id="entryList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation modal for deleting all entries -->
+    <div id="delete-confirmation-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('delete-confirmation-modal').style.display='none'">&times;</span>
+            <h2>Баталгаажуулах</h2>
+            <p>Та бүх трак кодуудыг устгахдаа итгэлтэй байна уу?</p>
+            <button onclick="deleteAllEntries()">Тийм</button>
+            <button onclick="closeModal('delete-confirmation')">Устгахгүй</button>
+        </div>
+    </div>
+
+    <!-- Холбоо барих модал -->
+    <div id="modal-contact" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('contact')">&times;</span>
+            <h2>Холбоо барих</h2>
+            <p>Утас: 8802 0677</p>
+        </div>
+    </div>
+
+    <!-- Заавар сургалт модал -->
+    <div id="modal-guide" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('guide')">&times;</span>
+            <h2>Заавар сургалт</h2>
+            <p>YouTube дээр үзнэ үү.</p>
+        </div>
+    </div>
+
+    <!-- Үйлчилгээний нөхцөл модал -->
+    <div id="modal-terms" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('terms')">&times;</span>
+            <h2>Үйлчилгээний нөхцөл</h2>
+            <p>Нийтлэг үйлчилгээний нөхцөлүүд...</p>
+        </div>
+    </div>
+
+    <!-- Хаяг холбох модал -->
+    <div id="modal-address" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('address')">&times;</span>
+            <h2>Хаяг</h2>
+            <p><strong>Хүлээн авагч:</strong> Өөрийн нэр утасны дугаар</p>
+            <p><strong>Утас:</strong> 15702475224</p>
+            <p><strong>Бүс нутаг:</strong> 内蒙古锡林郭勒盟二连浩特市三星建材 城南门东侧阿木吉勒塔电子商务有限公司</p>
+            <p><strong>Хаяг:</strong> 三星建材城南门东侧阿木吉勒塔电子商务有限公司 (Өөрийн Нэр утас)</p>
+            <button onclick="copyToClipboard('name')">Нэрийг хуулж авах</button>
+            <button onclick="copyToClipboard('phone')">Утас хуулж авах</button>
+            <button onclick="copyToClipboard('region')">Бүс нутаг хуулж авах</button>
+            <button onclick="copyToClipboard('address')">Хаягийг хуулж авах</button>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxa6G_R_cvX-Pv_4DFkOYIh2Y3DCSRVAB3TLFceoStYASIYxPP44g7yxH2FNIGR926/exec";
+
+        let adminPassword = "od16fc72fg";
+
+        // Статик өгөгдөл
+        let staticData = [
+            { trackingCode: '123456', name: 'Бараа A', phone: '8802 0677' },
+            { trackingCode: '654321', name: 'Бараа B', phone: '15702475224' }
+        ];
+
+        // Load data from local storage
+        function loadLocalData() {
+            const storedData = localStorage.getItem('trackingData');
+            if (storedData) {
+                staticData = JSON.parse(storedData);
+            } else {
+                // If no data is in local storage, store the initial static data
+                localStorage.setItem('trackingData', JSON.stringify(staticData));
+            }
+        }
+
+        // Save data to local storage
+        function saveToLocalStorage() {
+            localStorage.setItem('trackingData', JSON.stringify(staticData));
+        }
+
+        // Модал нээх функц
+        function openModal(name) {
+            document.getElementById('modal-' + name).style.display = 'block';
+        }
+
+        // Модал хаах функц
+        function closeModal(name) {
+            document.getElementById('modal-' + name).style.display = 'none';
+        }
+
+        // Модалын гадна дарж хаах
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+        };
+
+        // Админ модал нээгэх функц
+        function openAdminPopup() {
+            document.getElementById('admin-modal').style.display = 'block';
+        }
+
+        // Админыг баталгаажуулах
+        function validateAdmin() {
+            const passwordInput = document.getElementById("adminPassword").value;
+            if (passwordInput === adminPassword) {
+                document.getElementById('admin-area').style.display = 'block';
+                document.getElementById('adminPassword').value = ''; // Clear password
+            } else {
+                alert('Нууц үг буруу байна.');
+            }
+        }
+
+        // Парцел шалгах функц
+        function checkParcel() {
+            const input = document.getElementById("trackingInput").value.trim();
+            const resultDiv = document.getElementById("result");
+
+            if (!input) {
+                alert("Та утасны дугаар эсвэл бар код оруулна уу.");
+                return;
+            }
+
+            const foundEntries = staticData.filter(entry =>
+                entry.trackingCode === input || entry.phone === input
+            );
+
+            if (foundEntries.length > 0) {
+                resultDiv.innerHTML = '<h4>Хэрвээ дугаарын сүүлийн 4 орноор хайлт хийсэн үед сүүлийн 4 орон нь адилхан дугаартай хэрэглэгч байж болно !!!</h4>';
+                foundEntries.forEach(entry => {
+                    resultDiv.innerHTML += `<div style="background: var(--surface); padding: 16px; border-radius: 12px;">
+                    <h5>Трак код: ${entry.trackingCode}</h5>
+                    <p>Нэр: ${entry.name}</p>
+                    <p>Утас: ${entry.phone}</p></div>`;
+                });
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">Илэрц олдсонгүй.</p>';
+            }
+        }
+
+        // Open confirmation modal when delete button is clicked
+        function openDeleteConfirmation() {
+            document.getElementById('delete-confirmation-modal').style.display = 'block';
+        }
+
+        // Function to delete all entries
+        function deleteAllEntries() {
+            staticData = []; // Clear all entries
+            saveToLocalStorage(); // Clear local storage
+            updateEntryList(); // Refresh entry list
+            document.getElementById('delete-confirmation-modal').style.display = 'none'; // Close confirmation modal
+        }
+
+        // Багц мэдээлэл нэмэх функц
+        function addBulkEntries() {
+            const bulkInput = document.getElementById("bulkInput").value.trim();
+            const rows = bulkInput.split('\n'); // Мөрийг таслах
+
+            rows.forEach(row => {
+                const parts = row.trim().split('\t');
+                if (parts.length === 3) {
+                    const name = parts[0]; // Нэр
+                    const phone = parts[1]; // Утасны сүүлийн 4 орон
+                    const trackingCode = parts[2]; // Трак код
+
+                    // Ensuring the phone number maintains format
+                    const formattedPhone = phone.startsWith('0') ? phone : '0' + phone.slice(-4);
+
+                    const entry = { trackingCode, name, phone: formattedPhone };
+                    staticData.push(entry);
+                }
+            });
+
+            saveToLocalStorage(); // Save to local storage after adding entries
+            updateEntryList(); // Жагсаалтыг шинэчлэх
+            document.getElementById("bulkInput").value = ''; // Текстийг цэвэрлэх
+        }
+
+        // Filter entries based on the search input
+        function filterEntries() {
+            const searchValue = document.getElementById("adminSearchInput").value.toLowerCase();
+            const entryList = document.getElementById("entryList");
+            entryList.innerHTML = ''; // Clear current entry list
+
+            const filteredEntries = staticData.filter(entry => 
+                entry.trackingCode.toLowerCase().includes(searchValue) || 
+                entry.phone.includes(searchValue)
+            );
+
+            filteredEntries.forEach((entry, index) => {
+                const entryItem = document.createElement("div");
+                entryItem.classList.add('entry-item');
+                entryItem.innerHTML = `
+                    ${entry.trackingCode} - ${entry.name} - ${entry.phone}
+                    <button onclick="editEntry(${index})">Засварлах</button>
+                    <button onclick="deleteEntry(${index})">Устгах</button>
+                `;
+                entryList.appendChild(entryItem);
+            });
+        }
+
+        // Бараа бүртгэлийн жагсаалтыг шинэчлэх функц
+        function updateEntryList() {
+            const entryList = document.getElementById("entryList");
+            entryList.innerHTML = ''; // Clear current entry list
+
+            staticData.forEach((entry, index) => {
+                const entryItem = document.createElement("div");
+                entryItem.classList.add('entry-item');
+                entryItem.innerHTML = `
+                    ${entry.trackingCode} - ${entry.name} - ${entry.phone}
+                    <button onclick="editEntry(${index})">Засварлах</button>
+                    <button onclick="deleteEntry(${index})">Устгах</button>
+                `;
+                entryList.appendChild(entryItem);
+            });
+        }
+
+        // Барааг засах функц
+        function editEntry(index) {
+            const entry = staticData[index];
+            document.getElementById("newTrackingCode").value = entry.trackingCode;
+            document.getElementById("newName").value = entry.name;
+            document.getElementById("newPhone").value = entry.phone;
+
+            // Remove the entry to allow for re-addition
+            deleteEntry(index);
+        }
+
+        // Барааг устгах функц
+        function deleteEntry(index) {
+            staticData.splice(index, 1);
+            saveToLocalStorage(); // Save to local storage after deletion
+            updateEntryList();
+        }
+
+        // Клипборт руу хуулж авах функц
+        function copyToClipboard(type) {
+            const valueMap = {
+                name: 'Өөрийн нэр утасны дугаар',
+                phone: '15702475224',
+                region: '内蒙古锡林郭勒盟二连浩特市三星建材 城南门东侧阿木吉勒塔电子商务有限公司',
+                address: '三星建材城南门东侧阿木吉勒塔电子商务有限公司 (Өөрийн Нэр утас)'
+            };
+
+            navigator.clipboard.writeText(valueMap[type]).then(() => {
+                alert(type + " амжилттай хуулсан!");
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        // Load local data on page load
+        window.onload = loadLocalData;
+    </script>
+
+</body>
+</html>
